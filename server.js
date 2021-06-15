@@ -14,10 +14,10 @@ const bookings = require("./bookings.json");
 
 const bookingValidation = {
   body: Joi.object({
-    roomID: Joi.number().required().min(1),
-    title: Joi.string().min(2).required(),
-    firstName: Joi.string().required(),
-    surName: Joi.string().required(),
+    roomID: Joi.number().integer().required().min(1).max(10000),
+    title: Joi.string().min(2).max(10).required(),
+    firstName: Joi.string().max(40).required(),
+    surName: Joi.string().max(40).required(),
     email: Joi.string().email().required(),
     checkInDate: Joi.date().iso().required(),
     checkOutDate: Joi.date().iso().greater(Joi.ref('checkInDate')).required()
@@ -30,7 +30,8 @@ app.get("/", (request, response) => {
 
 app.post('/bookings', validate(bookingValidation, {}, {}), (req, res) => {
   const { roomID, title, firstName, surName, email, checkInDate, checkOutDate } = req.body;
-  const id = Number(bookings.length + 1);
+  const id = bookings[bookings.length - 1].id + 1;
+;
 
   const newBooking = {
     id,
@@ -50,7 +51,6 @@ app.use(function (err, req, res, next) {
   if (err instanceof ValidationError) {
     return res.status(err.statusCode).json(err)
   }
-
   return res.status(500).json(err)
 })
 
