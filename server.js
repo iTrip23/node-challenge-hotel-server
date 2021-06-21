@@ -1,8 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const { validate, ValidationError, Joi } = require('express-validation');
-
+const { Pool } = require('pg');
+require('dotenv').config();
 const app = express();
+
+const my_pass = process.env.MY_PASSWORD;
+const my_user = process.env.MY_USERNAME;
 
 const PORT = process.env.PORT || 3003;
 
@@ -11,6 +15,14 @@ app.use(cors());
 
 //Use this array as your (in-memory) data store.
 const bookings = require("./bookings.json");
+
+const pool = new Pool({
+  user: my_user,
+  host: 'localhost',
+  database: 'cyf_hotel',
+  password: my_pass,
+  port: 5432
+})
 
 const bookingValidation = {
   body: Joi.object({
@@ -21,17 +33,22 @@ const bookingValidation = {
     email: Joi.string().email().required(),
     checkInDate: Joi.date().iso().required(),
     checkOutDate: Joi.date().iso().greater(Joi.ref('checkInDate')).required()
-  })
-}
+  }),
+};
 
 app.get("/", (request, response) => {
   response.send("Hotel booking server.  Ask for /bookings, etc.");
 });
 
+app.get('/hotels', (req, res) => {
+  pool.query('SELECT * FROM hotels', (db_error, db_result) => {
+    res.json(db_result.rows);
+  })
+})
+
 app.post('/bookings', validate(bookingValidation, {}, {}), (req, res) => {
   const { roomID, title, firstName, surName, email, checkInDate, checkOutDate } = req.body;
   const id = bookings[bookings.length - 1].id + 1;
-;
 
   const newBooking = {
     id,
